@@ -1,31 +1,22 @@
 #include <iostream>
-#include <memory>
-#include <vector>
-
+#include "include/threadpool/ThreadPool.hpp"
 #include "include/jobs/SumJob.hpp"
 #include "include/jobs/PrimeJob.hpp"
-#include "include/jobs/SleepJob.hpp"
-#include "include/jobs/FailingJob.hpp"
-#include "include/queue/JobQueue.hpp"
+
 int main() {
 
-    JobQueue queue;
+    ThreadPool pool(3);
 
-    queue.push(std::make_unique<SumJob>(1, 100));
-    queue.push(std::make_unique<PrimeJob>(1, 100));
+    auto f1 = pool.submit(std::make_unique<SumJob>(1, 100));
+    auto f2 = pool.submit(std::make_unique<PrimeJob>(1, 100));
 
-    while (true) {
-        auto job = queue.tryPop();
+    std::cout << "Waiting for results...\n";
 
-        if (!job) break;
+    auto r1 = f1.get();
+    auto r2 = f2.get();
 
-        try {
-            JobResult result = job->run();
-            std::cout << result.message << " -> " << result.value << "\n";
-        } catch (...) {
-            std::cout << "Job failed\n";
-        }
-    }
+    std::cout << r1.message << " -> " << r1.value << "\n";
+    std::cout << r2.message << " -> " << r2.value << "\n";
 
     return 0;
 }
