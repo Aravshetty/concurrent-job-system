@@ -5,14 +5,14 @@
 
 #include "../queue/BlockingQueue.hpp"
 #include "../jobs/PromiseJob.hpp"
-
+#include "../utils/Metrics.hpp"
 class ThreadPool {
 private:
     std::vector<std::thread> workers;
     BlockingQueue queue;
-
+   
 public:
-
+     Metrics metrics;
     ThreadPool(int n) {
         for (int i = 0; i < n; i++) {
             workers.emplace_back([this]() {
@@ -22,8 +22,9 @@ public:
 
                     try {
                         job->run();
+                         metrics.tasksCompleted++;
                     } catch (...) {
-                       
+                       metrics.tasksFailed++;
                     }
                 }
             });
@@ -38,6 +39,7 @@ public:
     }
 
     std::future<JobResult> submit(std::unique_ptr<Job> job) {
+         metrics.tasksSubmitted++;
 
         std::promise<JobResult> prom;
         std::future<JobResult> fut = prom.get_future();
